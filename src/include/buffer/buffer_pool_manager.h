@@ -35,7 +35,7 @@ class BufferPoolManager {
    * @brief Creates a new BufferPoolManager.
    * @param pool_size the size of the buffer pool
    * @param disk_manager the disk manager
-   * @param replacer_k the LookBack constant k for the LRU-K replacer
+   * @param replacer_k the lookback constant k for the LRU-K replacer
    * @param log_manager the log manager (for testing only: nullptr = disable logging). Please ignore this for P1.
    */
   BufferPoolManager(size_t pool_size, DiskManager *disk_manager, size_t replacer_k = LRUK_REPLACER_K,
@@ -181,7 +181,7 @@ class BufferPoolManager {
   /** Array of buffer pool pages. */
   Page *pages_;
   /** Pointer to the disk manager. */
-  DiskManager *disk_manager_ __attribute__((__unused__));
+  DiskManager *disk_manager_;
   /** Pointer to the log manager. Please ignore this for P1. */
   LogManager *log_manager_ __attribute__((__unused__));
   /** Page table for keeping track of buffer pool pages. */
@@ -191,6 +191,7 @@ class BufferPoolManager {
   /** List of free frames that don't have any pages on them. */
   std::list<frame_id_t> free_list_;
   /** This latch protects shared data structures. We recommend updating this comment to describe what it protects. */
+  // protects the free list, page_table, pages_
   std::mutex latch_;
 
   /**
@@ -206,6 +207,15 @@ class BufferPoolManager {
   void DeallocatePage(__attribute__((unused)) page_id_t page_id) {
     // This is a no-nop right now without a more complex data structure to track deallocated pages
   }
+
+  /**
+   * @brief Find a free frame by consulting both the free list, as well as the replacer. Caller
+   * Should acquire the latch before calling this function.
+   *
+   * @param[out] frame_id id of the frame that is now free
+   * @return true if a frame was successfully found
+   */
+  auto FindAndEvictFrame(frame_id_t *frame_id) -> bool;
 
   // TODO(student): You may add additional private members and helper functions
 };
